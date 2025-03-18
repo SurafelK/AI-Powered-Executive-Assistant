@@ -1,6 +1,17 @@
 import { decrypt } from "../Config/encryptDecrypt";
 import { UserAccountModel } from "../model/userAccounts";
 import imaps from "imap-simple";
+import { decode } from "iconv-lite";
+import { simpleParser } from "mailparser";
+
+interface MessagePart {
+    which: string;
+    body: string;
+}
+
+interface Message {
+    parts: MessagePart[];
+}
 
 export const respondAllEmail = async () => {
     try {
@@ -19,8 +30,8 @@ export const respondAllEmail = async () => {
                 password,
                 emailData.hostname // Ensure this is always a string
             );
-
-            console.log(`Unread emails for ${emailData.email}:`, unreadEmails);
+            
+            console.log(`Unread emails for :`, unreadEmails);
         }
     } catch (error) {
         console.error("Error in respondAllEmail:", error);
@@ -38,7 +49,7 @@ const getUnreadEmails = async (
             imap: {
                 user: email,
                 password: password,
-                host: host, // Use mapped IMAP host
+                host: host,
                 port: 993,
                 tls: true,
                 tlsOptions: { rejectUnauthorized: false },
@@ -59,21 +70,57 @@ const getUnreadEmails = async (
 
         const messages = await connection.search(searchCriteria, fetchOptions);
 
-        // Extract unread email details
-        const unreadEmails = messages.map((message) => {
-            const header = message.parts.find((part) => part.which === "HEADER");
-            return {
-                from: header?.body.from?.[0] || "Unknown",
-                subject: header?.body.subject?.[0] || "No Subject",
-                date: header?.body.date?.[0] || "Unknown",
-                body: message.parts.find((part) => part.which === "TEXT")?.body || "No Content",
-            };
-        });
-
+        const unreadEmails = await Promise.all(
+            messages.map(async (message) => {
+                if (!message.parts || !Array.isArray(message.parts)) {
+                    console.error("Invalid message format:", message);
+                    return null;
+                }
+        
+                let headerPart = message.parts.find(part => part.which === 'HEADER');
+                let textPart = message.parts.find(part => part.which === 'TEXT');
+        
+                if (!headerPart || !textPart) {
+                    console.warn("Missing email parts:", message);
+                    return null;
+                }
+        
+                const header = headerPart.body || {};
+                const textBody = textPart.body || "No Content";
+        
+                try {
+                    // Parse the email
+                    const parsedEmail = await simpleParser(textBody);
+        
+                    // Extract plain text body, falling back to cleaned HTML if necessary
+                    let emailBody = parsedEmail.text?.trim() || "";
+                    if (!emailBody && parsedEmail.html) {
+                        emailBody = parsedEmail.html.replace(/<\/?[^>]+(>|$)/g, ""); // Remove HTML tags
+                    }
+                    const cleanBody = await extractPlainText (emailBody);
+            
+                    return {
+                        from: header.from?.[0] || "Unknown",
+                        subject: header.subject?.[0] || "No Subject",
+                        date: header.date?.[0] || "Unknown",
+                        body: cleanBody || "No Content",
+                    };
+                } catch (error) {
+                    console.error("Error parsing email:", error);
+                    return null;
+                }
+            })
+        );
+        
+        // Remove null values from results
+        const filteredEmails = unreadEmails.filter(email => email !== null);
+        
         // Close the connection
         await connection.end();
-
-        return unreadEmails;
+        
+        return filteredEmails;
+        
+        
     } catch (error) {
         console.error("Error fetching unread emails:", error);
         return [];
@@ -114,3 +161,29 @@ export const getIMAPCOMPANY = (email: string, provider: string): string[] => {
       return [];
     }
   };
+  const extractPlainText = (mimeBody: string): string => {
+    // Extract the MIME boundary dynamically
+    const boundaryMatch = mimeBody.match(/(------=_NextPart_[^\n]*)/);
+    const boundary = boundaryMatch ? boundaryMatch[0] : null;
+
+    if (!boundary) {
+        console.warn("MIME boundary not found.");
+        return '';
+    }
+
+    // Locate 'Content-Type: text/plain' and extract its content before the next boundary
+    const regex = new RegExp(`Content-Type:\\s*text/plain[\\s\\S]*?\\n\\n([\\s\\S]*?)(?:\\n\\n${boundary}|$)`, 'i');
+    const match = mimeBody.match(regex);
+
+    if (match && match[1]) {
+        return match[1]
+            .replace(/=\r\n/g, '') // Handle soft line breaks from quoted-printable
+            .replace(/=\n/g, '') // Handle soft line breaks
+            .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16))) // Decode quoted-printable encoding
+            .replace(/\r\n/g, ' ') // Replace hard line breaks with spaces
+            .replace(/\n/g, ' ') // Replace any remaining new lines
+            .trim();
+    }
+
+    return '';
+};
