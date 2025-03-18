@@ -3,6 +3,7 @@ import { UserAccountModel } from "../model/userAccounts";
 import imaps from "imap-simple";
 import { decode } from "iconv-lite";
 import { simpleParser } from "mailparser";
+import { getOpenAIResponse } from "./SendResponse";
 
 interface MessagePart {
     which: string;
@@ -31,7 +32,10 @@ export const respondAllEmail = async () => {
                 emailData.hostname // Ensure this is always a string
             );
             
-            console.log(`Unread emails for :`, unreadEmails);
+            console.log(`Unread emails for  ${emailData.email}:`, unreadEmails);
+            for ( let i = 0 ; i < unreadEmails.length; i++ ){
+               const response = await getOpenAIResponse(unreadEmails[i].subject, unreadEmails[i].body)
+            }
         }
     } catch (error) {
         console.error("Error in respondAllEmail:", error);
