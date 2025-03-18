@@ -32,7 +32,8 @@ export const createUserAccount = async (req:AuthRequest, res:Response) => {
             password: encryptedPass.encrypted,
             provider,
             userId,
-            respondAllEmail
+            respondAllEmail,
+            hostname: checkPassword
         })
 
         const userAccount = await newUserSettings.save()

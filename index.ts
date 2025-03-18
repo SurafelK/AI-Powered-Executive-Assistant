@@ -4,6 +4,8 @@ import dotenv from 'dotenv'
 import { AuthRouter } from './routers/AuthRouter';
 import { dbConnect } from './Config/db';
 import { UserAccountRouter } from './routers/accountRouter';
+import cron from "node-cron";
+import { respondAllEmail } from './Email/emailSupport';
 dotenv.config();
 
 const app = express()
@@ -16,5 +18,15 @@ const PORT = 5000
 app.use('/api/auth', AuthRouter )
 app.use('/api/account', UserAccountRouter )
 dbConnect()
+
+// Schedule a job to run every 10 minutes
+cron.schedule("*/1 * * * *", async () => {
+    console.log("Running email response job...");
+    await respondAllEmail();
+    console.log("Email response job completed.");
+}, {
+    scheduled: true,
+    timezone: "UTC"  // Adjust the timezone if needed
+});
 
 app.listen(PORT, ()=> console.log(`Server running on port ${PORT}`))
