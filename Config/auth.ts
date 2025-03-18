@@ -11,3 +11,16 @@ export const saltHashPass = async (password: string): Promise<{ saltPass: string
         throw new Error("Password hashing failed");
     }
 };
+
+export const comparePass = async (salt:string, password:string, hashedPass:string) : Promise <Boolean> =>{
+    try {
+        const hashpass = await bcrypt.hash(password, salt)
+        if( hashedPass === hashpass  ){
+            return true
+        }
+
+        return false
+    } catch (error) {
+        return false
+    }
+}

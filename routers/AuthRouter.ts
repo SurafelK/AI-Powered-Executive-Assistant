@@ -1,8 +1,10 @@
 import express from 'express'
-import { createUser } from '../controller/authController'
+import { createUser, getProfile, login } from '../controller/authController'
+import { authMiddleware } from '../middlewares/authMiddleware'
 
 const router = express.Router()
 
-router.post('/create', createUser )
-
+router.post('/register', createUser )
+router.post('/login', login )
+router.get('/profile', authMiddleware,getProfile )
 export {router as AuthRouter}

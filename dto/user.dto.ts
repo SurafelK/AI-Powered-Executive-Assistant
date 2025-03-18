@@ -3,3 +3,8 @@ export interface ICreateUserInput {
     password:string,
     email:string
 }
+
+export interface ILoginInput {
+    password:string,
+    email:string
+}
