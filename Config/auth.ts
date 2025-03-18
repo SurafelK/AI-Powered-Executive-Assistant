@@ -7,7 +7,7 @@ export const saltHashPass = async (password: string): Promise<{ saltPass: string
 
         return { saltPass, hashPass };
     } catch (error) {
-        console.error("Error hashing password:", error);
+        
         throw new Error("Password hashing failed");
     }
 };

@@ -5,13 +5,15 @@ interface IUserAccount extends Document {
     password: string;
     provider: string;
     userId: mongoose.Types.ObjectId; // Reference to User
+    respondAllEmail: boolean;
 }
 
 const UserAccountSchema = new Schema<IUserAccount>({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     provider: { type: String, required: true },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true } // Reference to UserModel
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Reference to UserModel
+    respondAllEmail: { type: Boolean, default: false } 
 });
 
 const UserAccountModel = model<IUserAccount>("UserAccount", UserAccountSchema);

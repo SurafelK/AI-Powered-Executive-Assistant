@@ -22,6 +22,7 @@ const UserSchema = new Schema<IUser>(
                 delete ret.createdAt;
                 delete ret.updatedAt;
                 delete ret._id;
+                delete ret.__v;
                 return ret;
             },
         },
