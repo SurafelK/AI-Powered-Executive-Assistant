@@ -1,7 +1,7 @@
 import { sendEmail } from './../Email/SendResponse';
 import { AuthRequest } from "../Config/express";
 import { Response } from 'express';
-import { IgetAccountEmails, IUserSettingInput, SuggestionRequest } from "../dto/setting.dto";
+import { IgetAccountEmails, IUserSettingInput, sendEmailInput, SuggestionRequest } from "../dto/setting.dto";
 import { emailLogin, getProviderFromEmail } from "../Config/EmailConfig";
 import { UserAccountModel } from "../model/userAccounts";
 import { decrypt, encrypt } from "../Config/encryptDecrypt";
@@ -130,10 +130,35 @@ export const getSuggestion = async (req: AuthRequest, res: Response) => {
     }
 };
 
-export const sendResponsez = async (req:AuthRequest, res:Response) => {
+export const sendResponses = async (req:AuthRequest, res:Response) => {
     try {
-        
+        const id = req.user.id
+        const {to, body, email} = <sendEmailInput> req.body
+        if(!to  || !body || !email){
+            res.status(400).json({message:"Please provide all required fields"})
+        }
+        const emailAccount = await UserAccountModel.findOne({ email });
+
+        if( !emailAccount || id !== emailAccount?.userId.toString() ){
+            res.status(400).json({message: "This account doesn't belongs to you"})
+            return
+        }
+
+        const decryptedPass = await decrypt(emailAccount.password)
+
+        const emailSend = await sendEmail(emailAccount.email, to,body, emailAccount.hostname,decryptedPass.decrypted.toString()  )
+
+        if(emailSend.success){
+            res.status(200).json({message:"Email sent successfully"})
+            return
+        }
+        if(emailSend.error){
+            res.status(200).json({message:"Email couldn't be sent"})
+            return
+        }
+
     } catch (error) {
-        
+        res.status(500).json({message:"Internal server error"})
+        return
     }
 }

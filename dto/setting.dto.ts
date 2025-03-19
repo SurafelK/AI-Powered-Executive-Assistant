@@ -15,3 +15,8 @@ export interface SuggestionRequest {
     body: string;
     subject: string;
 }
+export interface sendEmailInput {
+    to: string;
+    body: string;
+    email: string;
+}
