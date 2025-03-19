@@ -39,6 +39,8 @@ export const respondAllEmail = async () => {
                const sendResponse = await sendEmail(emailData.email,unreadEmails[i].from, response, emailData.hostname, password)
                if(sendResponse.success){
                 console.log("Sent Successfully")
+                await markEmailAsRead(emailData.email, password, emailData.hostname, unreadEmails[i].date);
+             
                }
                if(sendResponse.error){
                 console.log("Not Sent")
@@ -198,4 +200,46 @@ export const getIMAPCOMPANY = (email: string, provider: string): string[] => {
     }
 
     return '';
+};
+
+
+const markEmailAsRead = async (email: string, password: string, host: string, emailDate: string) => {
+    try {
+        const config = {
+            imap: {
+                user: email,
+                password: password,
+                host: host,
+                port: 993,
+                tls: true,
+                tlsOptions: { rejectUnauthorized: false },
+                authTimeout: 10000,
+            },
+        };
+
+        const connection = await imaps.connect(config);
+        await connection.openBox("INBOX");
+
+        // Search for the email based on date (or subject if needed)
+        const searchCriteria = [["ON", emailDate]]; 
+
+        const messages = await connection.search(searchCriteria, { bodies: [], struct: true });
+
+        if (messages.length > 0) {
+            await Promise.all(
+                messages.map(msg => 
+                    connection.addFlags(msg.attributes.uid, ["\\Seen"])
+                )
+            );
+            
+
+            console.log(`Marked ${messages.length} email(s) as read.`);
+        } else {
+            console.log("No matching email found to mark as read.");
+        }
+
+        await connection.end();
+    } catch (error) {
+        console.error("Error marking email as read:", error);
+    }
 };
