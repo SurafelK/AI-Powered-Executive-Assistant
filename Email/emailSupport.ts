@@ -4,6 +4,7 @@ import imaps from "imap-simple";
 import { decode } from "iconv-lite";
 import { simpleParser } from "mailparser";
 import { getGeminiResponse, sendEmail } from "./SendResponse";
+import * as cheerio from 'cheerio';
 
 interface MessagePart {
     which: string;
@@ -175,7 +176,28 @@ export const getIMAPCOMPANY = (email: string, provider: string): string[] => {
       return [];
     }
   };
+  
+  export const extractEmailBody = (mimeBody: string): string => {
+    // Decode quoted-printable encoding
+    const decodeQuotedPrintable = (text: string): string =>
+        text
+            .replace(/=\r\n/g, '') // Remove soft line breaks
+            .replace(/=\n/g, '')
+            .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16))); // Decode hex chars
+
+    // Extract HTML content from MIME
+    const htmlMatch = mimeBody.match(/Content-Type:\s*text\/html[\s\S]*?\n\n([\s\S]*?)(?:\n\n------|$)/i);
+    if (!htmlMatch || !htmlMatch[1]) return 'No Content';
+
+    // Decode HTML content and parse with Cheerio
+    const decodedHtml = decodeQuotedPrintable(htmlMatch[1]);
+    const $ = cheerio.load(decodedHtml);
+
+    return $('body').text().replace(/\s+/g, ' ').trim(); // Extract and clean text
+};
   const extractPlainText = (mimeBody: string): string => {
+    console.log(mimeBody);
+
     // Extract the MIME boundary dynamically
     const boundaryMatch = mimeBody.match(/(------=_NextPart_[^\n]*)/);
     const boundary = boundaryMatch ? boundaryMatch[0] : null;
@@ -185,23 +207,36 @@ export const getIMAPCOMPANY = (email: string, provider: string): string[] => {
         return '';
     }
 
-    // Locate 'Content-Type: text/plain' and extract its content before the next boundary
-    const regex = new RegExp(`Content-Type:\\s*text/plain[\\s\\S]*?\\n\\n([\\s\\S]*?)(?:\\n\\n${boundary}|$)`, 'i');
-    const match = mimeBody.match(regex);
+    // Try to extract text/plain content first
+    const textRegex = new RegExp(`Content-Type:\\s*text/plain[\\s\\S]*?\\n\\n([\\s\\S]*?)(?:\\n\\n${boundary}|$)`, 'i');
+    let match = mimeBody.match(textRegex);
 
     if (match && match[1]) {
         return match[1]
             .replace(/=\r\n/g, '') // Handle soft line breaks from quoted-printable
-            .replace(/=\n/g, '') // Handle soft line breaks
-            .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16))) // Decode quoted-printable encoding
-            .replace(/\r\n/g, ' ') // Replace hard line breaks with spaces
-            .replace(/\n/g, ' ') // Replace any remaining new lines
+            .replace(/=\n/g, '')
+            .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16))) // Decode quoted-printable
+            .replace(/\r\n/g, ' ')
+            .replace(/\n/g, ' ')
             .trim();
+    }
+
+    // If no plain text found, extract HTML and convert to plain text
+    const htmlRegex = new RegExp(`Content-Type:\\s*text/html[\\s\\S]*?\\n\\n([\\s\\S]*?)(?:\\n\\n${boundary}|$)`, 'i');
+    match = mimeBody.match(htmlRegex);
+
+    if (match && match[1]) {
+        const htmlContent = match[1]
+            .replace(/=\r\n/g, '') // Handle soft line breaks
+            .replace(/=\n/g, '')
+            .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16))); // Decode quoted-printable
+
+        const $ = cheerio.load(htmlContent);
+        return $('body').text().replace(/\s+/g, ' ').trim(); // Convert HTML to plain text
     }
 
     return '';
 };
-
 
 const markEmailAsRead = async (email: string, password: string, host: string, emailDate: string) => {
     try {

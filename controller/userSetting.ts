@@ -1,3 +1,4 @@
+import { sendEmail } from './../Email/SendResponse';
 import { AuthRequest } from "../Config/express";
 import { Response } from 'express';
 import { IgetAccountEmails, IUserSettingInput, SuggestionRequest } from "../dto/setting.dto";
@@ -128,3 +129,11 @@ export const getSuggestion = async (req: AuthRequest, res: Response) => {
         return
     }
 };
+
+export const sendResponsez = async (req:AuthRequest, res:Response) => {
+    try {
+        
+    } catch (error) {
+        
+    }
+}

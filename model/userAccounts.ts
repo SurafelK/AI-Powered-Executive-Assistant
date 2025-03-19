@@ -21,8 +21,6 @@ const UserAccountSchema = new Schema<IUserAccount>({
     transform: (_doc, ret) => {
         delete ret.password;
         delete ret.provider;
-        delete ret.createdAt;
-        delete ret.updatedAt;
         delete ret._id;
         delete ret.userId;
         delete ret.__v;

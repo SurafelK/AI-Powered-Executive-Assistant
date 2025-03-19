@@ -6,6 +6,6 @@ const router = express.Router()
 
 router.post('/add',authMiddleware, createUserAccount )
 router.get('/acc-emails', authMiddleware, getAccountEmails)
-router.get('/get-suggestion', authMiddleware,getSuggestion )
-router.get('/all-accounts', authMiddleware, getAllAccounts)
+router.post('/get-suggestion', authMiddleware,getSuggestion )
+router.post('/all-accounts', authMiddleware, getAllAccounts)
 export { router as UserAccountRouter }
