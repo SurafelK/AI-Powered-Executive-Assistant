@@ -1,4 +1,4 @@
-import { getIMAPCOMPANY } from './../Email/emailSupport';
+import { getIMAPCOMPANY } from '../Email/emailSupport';
 import imaps from "imap-simple";
 import { getIMAPHost } from "../Email/emailSupport";
 

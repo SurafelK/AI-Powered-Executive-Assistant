@@ -1,4 +1,4 @@
-import { sendEmail } from './../Email/SendResponse';
+import { sendEmail } from '../Email/SendResponse';
 import { AuthRequest } from "../Config/express";
 import { Response } from 'express';
 import { IgetAccountEmails, IUserSettingInput, sendEmailInput, SuggestionRequest } from "../dto/setting.dto";
