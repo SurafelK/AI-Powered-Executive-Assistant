@@ -11,6 +11,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@google/generative-ai": "^0.24.0",
     "@types/axios": "^0.14.4",
     "axios": "^1.8.3",
     "bcrypt": "^5.1.1",
@@ -30,7 +31,7 @@
     "mongoose": "^8.12.1",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.10.0",
-    "openai": "^4.87.3",
+    "openai": "^4.87.4",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0"
   },
