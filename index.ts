@@ -19,8 +19,8 @@ app.use('/api/auth', AuthRouter )
 app.use('/api/account', UserAccountRouter )
 dbConnect()
 
-// Schedule a job to run every 10 minutes
-cron.schedule("*/1 * * * *", async () => {
+// Schedule a job to run every 1 day
+cron.schedule("0 0 * * *", async () => {
     console.log("Running email response job...");
     await respondAllEmail();
     console.log("Email response job completed.");
@@ -28,5 +28,6 @@ cron.schedule("*/1 * * * *", async () => {
     scheduled: true,
     timezone: "UTC"  // Adjust the timezone if needed
 });
+
 
 app.listen(PORT, ()=> console.log(`Server running on port ${PORT}`))
