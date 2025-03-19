@@ -1,7 +1,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import nodemailer, { Transporter } from "nodemailer";
 import dns from "dns";
-const apiKey = 'AIzaSyDaSupt3TwoMozaqtlL3ezzjHYGK5fmeA0' ; // Replace with your actual API key
+import dotenv from 'dotenv'
+dotenv.config();
+const apiKey = process.env.GEMINI_API_KEY ; // Replace with your actual API key
 
 if (!apiKey) {
   console.error("GEMINI_API_KEY is not defined.");
@@ -9,6 +11,29 @@ if (!apiKey) {
 }
 
 const genAI = new GoogleGenerativeAI(apiKey);
+
+export const getEmailWithSuggestion = async (subject: string, body: string, from: string, suggestion:string) => {
+  try {
+    console.log(body);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+
+    const prompt = `Subject: ${subject}\nBody from ${from}:\n ${body}\n\nPlease provide a professional response to the message above. which says ${suggestion}.`;
+
+    const result = await model.generateContent(prompt);
+    
+    if (!result || !result.response) {
+      throw new Error("No response received from the model.");
+    }
+
+    const text = await result.response.text();
+    
+    console.log(text);
+    return text || "No response received.";
+  } catch (error) {
+    console.error("Gemini API error:", error);
+    return "An error occurred while generating the response.";
+  }
+};
 
 export const getGeminiResponse = async (subject: string, body: string, from: string) => {
   try {

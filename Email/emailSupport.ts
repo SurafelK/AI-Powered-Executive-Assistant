@@ -243,3 +243,91 @@ const markEmailAsRead = async (email: string, password: string, host: string, em
         console.error("Error marking email as read:", error);
     }
 };
+
+
+export const getAllEmails = async (
+    email: string,
+    password: string,
+    host: string
+) => {
+    try {
+        const config = {
+            imap: {
+                user: email,
+                password: password,
+                host: host,
+                port: 993,
+                tls: true,
+                tlsOptions: { rejectUnauthorized: false },
+                authTimeout: 10000,
+            },
+        };
+
+        // Connect to IMAP server
+        const connection = await imaps.connect(config);
+        await connection.openBox("INBOX");
+
+        // ✅ Fetch all emails (both read & unread)
+        const searchCriteria = ["ALL"]; // Instead of ["UNSEEN"]
+        const fetchOptions = {
+            bodies: ["HEADER", "TEXT"],
+            struct: true,
+        };
+
+        const messages = await connection.search(searchCriteria, fetchOptions);
+
+        const allEmails = await Promise.all(
+            messages.map(async (message) => {
+                if (!message.parts || !Array.isArray(message.parts)) {
+                    console.error("Invalid message format:", message);
+                    return null;
+                }
+
+                let headerPart = message.parts.find(part => part.which === "HEADER");
+                let textPart = message.parts.find(part => part.which === "TEXT");
+
+                if (!headerPart || !textPart) {
+                    console.warn("Missing email parts:", message);
+                    return null;
+                }
+
+                const header = headerPart.body || {};
+                const textBody = textPart.body || "No Content";
+
+                try {
+                    // Parse the email
+                    const parsedEmail = await simpleParser(textBody);
+
+                    // Extract plain text body, falling back to cleaned HTML if necessary
+                    let emailBody = parsedEmail.text?.trim() || "";
+                    if (!emailBody && parsedEmail.html) {
+                        emailBody = parsedEmail.html.replace(/<\/?[^>]+(>|$)/g, ""); // Remove HTML tags
+                    }
+                    const cleanBody = await extractPlainText(emailBody);
+
+                    return {
+                        from: header.from?.[0] || "Unknown",
+                        subject: header.subject?.[0] || "No Subject",
+                        date: header.date?.[0] || "Unknown",
+                        body: cleanBody || "No Content",
+                    };
+                } catch (error) {
+                    console.error("Error parsing email:", error);
+                    return null;
+                }
+            })
+        );
+
+        // Remove null values from results
+        const filteredEmails = allEmails.filter(email => email !== null);
+
+        // Close the connection
+        await connection.end();
+
+        return filteredEmails;
+
+    } catch (error) {
+        console.error("Error fetching all emails:", error);
+        return [];
+    }
+};

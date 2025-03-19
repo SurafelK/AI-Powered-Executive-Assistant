@@ -1,9 +1,11 @@
 import { AuthRequest } from "../Config/express";
 import { Response } from 'express';
-import { IUserSettingInput } from "../dto/setting.dto";
+import { IgetAccountEmails, IUserSettingInput, SuggestionRequest } from "../dto/setting.dto";
 import { emailLogin, getProviderFromEmail } from "../Config/EmailConfig";
 import { UserAccountModel } from "../model/userAccounts";
-import { encrypt } from "../Config/encryptDecrypt";
+import { decrypt, encrypt } from "../Config/encryptDecrypt";
+import { getAllEmails } from "../Email/emailSupport";
+import { getEmailWithSuggestion } from "../Email/SendResponse";
 
 export const createUserAccount = async (req:AuthRequest, res:Response) => {
     try {
@@ -43,4 +45,66 @@ export const createUserAccount = async (req:AuthRequest, res:Response) => {
         res.status(500).json({message: "Internal server error"})
         return
     }
-}
+}  
+
+
+export const getAccountEmails = async (req: AuthRequest, res: Response) => {
+    try {
+        const id = req.user.id;
+        const { email } = <IgetAccountEmails> req.body; 
+        
+        const emailAccount = await UserAccountModel.findOne({ email });
+        console.log(emailAccount, id)
+  
+        if (!emailAccount || emailAccount.userId.toString() !== id) {
+            res.status(400).json({ message: "This account doesn't belong to you" });
+            return
+        }
+
+        const decryptedPass = await decrypt(emailAccount.password);
+        if (!decryptedPass?.decrypted) {
+            res.status(500).json({ message: "Failed to decrypt password" });
+            return
+        }
+
+        
+        const hostname = typeof emailAccount.hostname === 'string' ? emailAccount.hostname : ''; // Default to an empty string if not a string
+        const allEmails = await getAllEmails(
+            emailAccount.email,
+            decryptedPass.decrypted.toString(),
+            hostname 
+        );
+
+        res.status(200).json({ emails: allEmails });
+        return
+
+    } catch (error) {
+        console.error("Error fetching account emails:", error);
+        res.status(500).json({ message: "Internal server error" });
+        return
+    }
+};
+
+export const getSuggestion = async (req: AuthRequest, res: Response) => {
+    try {
+
+        const body = req.body as unknown;
+
+        // Then, assert it as SuggestionRequest
+        const { idea, from: sender, body: messageBody, subject } = body as SuggestionRequest;
+
+        if (!idea) {
+            throw new Error("Idea is required");
+        }
+
+        const response = await getEmailWithSuggestion(subject, messageBody, sender, idea);
+        console.log(response)
+        res.status(200).json({ idea, response });
+        return
+
+    } catch (error) {
+        console.error("Error handling suggestion:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+        return
+    }
+};
