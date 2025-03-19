@@ -3,7 +3,7 @@ import { UserAccountModel } from "../model/userAccounts";
 import imaps from "imap-simple";
 import { decode } from "iconv-lite";
 import { simpleParser } from "mailparser";
-import { getGeminiResponse } from "./SendResponse";
+import { getGeminiResponse, sendEmail } from "./SendResponse";
 
 interface MessagePart {
     which: string;
@@ -35,6 +35,14 @@ export const respondAllEmail = async () => {
             console.log(`Unread emails for  ${emailData.email}:`, unreadEmails);
             for ( let i = 0 ; i < unreadEmails.length; i++ ){
                const response = await getGeminiResponse(unreadEmails[i].subject, unreadEmails[i].body, unreadEmails[i].from)
+               console.log(unreadEmails)
+               const sendResponse = await sendEmail(emailData.email,unreadEmails[i].from, response, emailData.hostname, password)
+               if(sendResponse.success){
+                console.log("Sent Successfully")
+               }
+               if(sendResponse.error){
+                console.log("Not Sent")
+               }
             }
         }
     } catch (error) {
