@@ -28,8 +28,8 @@ const PORT = 5000;
 app.use('/api/auth', AuthRouter_1.AuthRouter);
 app.use('/api/account', accountRouter_1.UserAccountRouter);
 (0, db_1.dbConnect)();
-// Schedule a job to run every 10 minutes
-node_cron_1.default.schedule("*/1 * * * *", () => __awaiter(void 0, void 0, void 0, function* () {
+// Schedule a job to run every 1 day
+node_cron_1.default.schedule("0 0 * * *", () => __awaiter(void 0, void 0, void 0, function* () {
     console.log("Running email response job...");
     yield (0, emailSupport_1.respondAllEmail)();
     console.log("Email response job completed.");
