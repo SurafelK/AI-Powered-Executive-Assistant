@@ -16,7 +16,23 @@ const UserAccountSchema = new Schema<IUserAccount>({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Reference to UserModel
     respondAllEmail: { type: Boolean, default: false },
     hostname: {type:String, required:true}
-});
+},
+{toJSON: {
+    transform: (_doc, ret) => {
+        delete ret.password;
+        delete ret.provider;
+        delete ret.createdAt;
+        delete ret.updatedAt;
+        delete ret._id;
+        delete ret.userId;
+        delete ret.__v;
+        return ret;
+    },
+    
+},
+timestamps:true
+}
+);
 
 const UserAccountModel = model<IUserAccount>("UserAccount", UserAccountSchema);
 

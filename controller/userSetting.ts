@@ -47,6 +47,26 @@ export const createUserAccount = async (req:AuthRequest, res:Response) => {
     }
 }  
 
+export const getAllAccounts = async (req: AuthRequest, res: Response) => {
+    try {
+        const id = req.user.id;
+
+        const emailAccounts = await UserAccountModel.find({userId:id});
+
+        if (!emailAccounts) {
+            res.status(400).json({ message: "No email account found" });
+            return
+        }
+
+        res.status(200).json({ emailAccounts });
+        return
+
+    } catch (error) {
+        console.error("Error fetching accounts:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+        return
+    }
+};
 
 export const getAccountEmails = async (req: AuthRequest, res: Response) => {
     try {
