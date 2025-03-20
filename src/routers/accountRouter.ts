@@ -1,5 +1,5 @@
 import express from 'express'
-import { createUserAccount, getAccountEmails, getAllAccounts, getSuggestion, sendResponses } from '../controller/userSetting'
+import { createUserAccount, getAccountEmails, getAllAccounts, getSuggestion, sendResponses } from '../controller/userAccounts'
 import { authMiddleware } from '../middlewares/authMiddleware'
 
 const router = express.Router()

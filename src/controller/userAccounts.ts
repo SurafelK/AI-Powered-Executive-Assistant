@@ -1,7 +1,7 @@
 import { sendEmail } from '../Email/SendResponse';
 import { AuthRequest } from "../Config/express";
 import { Response } from 'express';
-import { IgetAccountEmails, IUserSettingInput, sendEmailInput, SuggestionRequest } from "../dto/setting.dto";
+import { IgetAccountEmails, IUserSettingInput, sendEmailInput, SuggestionRequest } from "../dto/account.dto";
 import { emailLogin, getProviderFromEmail } from "../Config/EmailConfig";
 import { UserAccountModel } from "../model/userAccounts";
 import { decrypt, encrypt } from "../Config/encryptDecrypt";
@@ -12,9 +12,13 @@ export const createUserAccount = async (req:AuthRequest, res:Response) => {
     try {
         const userId = req.user.id
 
-        const { email, password, respondAllEmail } = <IUserSettingInput> req.body
+        const { email, password, respondAllEmail, preferenceResponse} = <IUserSettingInput> req.body
         if(!email || !password ){
             res.status(400).json({message:"Please provide all required fields"})
+        }
+        if (preferenceResponse && preferenceResponse.length > 100) {
+            res.status(400).json({message: "Preference response if has to be less than 100 characters"})
+            return
         }
         const provider = await getProviderFromEmail(email)
         if(!provider){
@@ -36,7 +40,8 @@ export const createUserAccount = async (req:AuthRequest, res:Response) => {
             provider,
             userId,
             respondAllEmail,
-            hostname: checkPassword
+            hostname: checkPassword,
+            preferenceResponse
         })
 
         const userAccount = await newUserSettings.save()

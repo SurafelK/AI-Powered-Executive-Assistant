@@ -9,7 +9,7 @@ import { AuthRequest } from '../Config/express';
 
 export const createUser = async (req:Request, res:Response) => {
     try {
-        const {email, name, password} = <ICreateUserInput> req.body
+        const {email, name, password, } = <ICreateUserInput> req.body
         console.log(email,name,password)
         if(!email || !name || !password ){
             res.status(400).json({message: "Please fill all required fields"})

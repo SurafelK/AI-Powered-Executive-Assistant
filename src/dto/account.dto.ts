@@ -3,6 +3,7 @@ export interface IUserSettingInput {
     password: string;
     provider: string;
     respondAllEmail?: boolean; // Optional if not always provided
+    preferenceResponse?: string
 }
 
 export interface IgetAccountEmails {
