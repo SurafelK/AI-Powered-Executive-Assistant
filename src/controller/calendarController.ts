@@ -2,7 +2,8 @@ import { Response } from "express";
 import { AuthRequest } from "../Config/express";
 import { ICreateCalendarEventInput } from "../dto/calendar.dto";
 import { UserAccountModel } from "../model/userAccounts";
-import { checkUserAvailability } from "../Config/CalendarManagment";
+import { checkUserAvailability, CheckUserCalendar } from "../Config/CalendarManagment";
+import { CalendarEventModel } from '../model/calendar';
 
 
 export const checkCalendar = async (req:AuthRequest, res:Response) => {
@@ -18,6 +19,14 @@ export const checkCalendar = async (req:AuthRequest, res:Response) => {
 
         res.status(200).json({isAvailable, message})
 
+    } catch (error) {
+        
+    }
+}
+
+const getCallendars = async (req:AuthRequest, res:Response) => {
+    try {
+        
     } catch (error) {
         
     }
@@ -51,8 +60,26 @@ export const createCalendar = async (req:AuthRequest, res:Response) => {
             return
         }
 
+        const checkCalendar = await CheckUserCalendar(userId, startTime, endTime)
+        
+        if(!checkCalendar  || !checkCalendar.isAvailable ){
+            const newCalendar = new CalendarEventModel({
+                title,
+                startTime,
+                endTime,
+                attendees,
+                description,
+                location,
+                recurrence,
+                reminders,
+                status,
+                timeZone
+            })
 
-      
+            await newCalendar.save()
+            
+            res.status(201).json({message: "Event Added to calendar successfully", newCalendar })
+        }
 
     } catch (error) {
         
