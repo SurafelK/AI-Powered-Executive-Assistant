@@ -34,7 +34,7 @@ export const CheckUserCalendar = async (userId:string, startDate: Date, endDate:
            return {isAvailable:true, message:`Calendar is free at ${startDate} - ${endDate}` }
         }
 
-        return {isAvailable:true, message:`User calendar is Available on ${startDate} - ${endDate}` }
+        return {isAvailable:false, message:`User calendar isn't Available on ${startDate} - ${endDate} for ${userCheckCalendar[0].title} ` }
     } catch (error) {
         return {isAvailable:true, message:`Error in checking calendar ${startDate} - ${endDate}` }
     }
@@ -59,9 +59,9 @@ export const checkScheduleAvailable = async (userId:string, startDate: Date, end
         const endDay = dayNames[endDate.getDay()];
 
         if (!userWorkingDays || !userWorkingDays.includes(startDay) || !userWorkingDays.includes(endDay) ){
-            return {isAvailable: false, message : `User preference is not on ${startDate} - ${endDate} ` }
+            return {isAvailable: false, message : `User preference is not on ${startDate}  - ${endDate}  ` }
         }
-        return {isAvailable:true, message:`User preference is ${startDate} - ${endDate}` }
+        return {isAvailable:true, message:`User preference is ${startDate} ${userWorkingDays.includes(startDay)} - ${endDate}  ${userWorkingDays.includes(endDay)}` }
     } catch (error) {
         return {
             isAvailable: false,

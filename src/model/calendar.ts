@@ -36,7 +36,7 @@ const CalendarEventSchema = new Schema<ICalendarEvent>({
     ref: "UserAccount",
     required: true
   },
-  title: {type: String, required: true, maxlength: 120},
+  title: {type: String, maxlength: 120},
   description: {
     type: String
   },

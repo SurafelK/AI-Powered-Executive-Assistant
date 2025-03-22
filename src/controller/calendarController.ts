@@ -2,6 +2,26 @@ import { Response } from "express";
 import { AuthRequest } from "../Config/express";
 import { ICreateCalendarEventInput } from "../dto/calendar.dto";
 import { UserAccountModel } from "../model/userAccounts";
+import { checkUserAvailability } from "../Config/CalendarManagment";
+
+
+export const checkCalendar = async (req:AuthRequest, res:Response) => {
+    try {
+        const userId = req.user.id
+        let {startDate, endDate} = req.query
+        if(!startDate || !endDate){
+            res.status(400).json({message: "StartDate and endDate are required"})
+        }
+       const FstartDate = new Date (startDate as string )
+       const FendDate = new Date (endDate as string )
+        const {isAvailable, message} = await checkUserAvailability(userId, FstartDate, FendDate)
+
+        res.status(200).json({isAvailable, message})
+
+    } catch (error) {
+        
+    }
+}
 
 export const createCalendar = async (req:AuthRequest, res:Response) => {
     try {
@@ -14,7 +34,7 @@ export const createCalendar = async (req:AuthRequest, res:Response) => {
         }
         const {title, endTime, startTime, attendees, description, location, recurrence, reminders, status, timeZone} = <ICreateCalendarEventInput> req.body
 
-        if( !emailId || !title || !startTime || !endTime || !attendees || attendees.length === 0 ){
+        if( !emailId || !startTime || !endTime || !attendees || attendees.length === 0 ){
             res.status(400).json({message: "Please provide all required fields"})
             return
         }
@@ -31,7 +51,8 @@ export const createCalendar = async (req:AuthRequest, res:Response) => {
             return
         }
 
-        const checkAvailability = 0
+
+      
 
     } catch (error) {
         
