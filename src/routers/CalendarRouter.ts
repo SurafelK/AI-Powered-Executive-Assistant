@@ -4,4 +4,6 @@ import { authMiddleware } from '../middlewares/authMiddleware'
 
 const router = express.Router()
 
-router.get('/calendar', authMiddleware, checkCalendar);
+router.get('/check', authMiddleware, checkCalendar);
+
+export {router as CalendarRouter}
