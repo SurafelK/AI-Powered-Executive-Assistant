@@ -1,6 +1,6 @@
 export interface ICreateCalendarEventInput {
     userId: string; 
-    emailId: string;
+    email: string;
     title: string;
     description?: string;
     location?: string;

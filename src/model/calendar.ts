@@ -58,8 +58,8 @@ const CalendarEventSchema = new Schema<ICalendarEvent>({
   reminders: [
     {
       timeBeforeEvent: {
-        type: Number,
-        required: true
+        type: Number, 
+        default: 15 // In minutes
       },
       method: {
         type: String,

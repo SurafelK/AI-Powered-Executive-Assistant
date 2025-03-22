@@ -23,40 +23,76 @@ export const dayNames = async (num:number) => {
       
 }
 
-export const CheckUserCalendar = async (userId:string, startDate: Date, endDate:Date): Promise<{ isAvailable: boolean; message: string }  > => {
+export const CheckUserCalendar = async (
+    userId: string,
+    startDate: any,
+    endDate: any
+  ): Promise<{ isAvailable: boolean; message: string; calendar?: any[] }> => {
     try {
 
-        const userEmails = await UserAccountModel.find({
-            userId: userId
-        })
-        const userEmailIds = await userEmails.map(({_id}) => _id )
-        const userCheckCalendar = await CalendarEventModel.find({
-            userId:{$in: userEmailIds},
-            startTime: {$gte: startDate },
-            endTime: {$lte: endDate}
-        })
+      const start = new Date(startDate);
+      const end = new Date(endDate);
 
-        if(!userCheckCalendar || userCheckCalendar.length === 0 ){
-           return {isAvailable:true, message:`Calendar is free at ${startDate} - ${endDate}` }
-        }
+      console.log(start)
+      console.log(end)
+  
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return { isAvailable: false, message: "Invalid date format provided." };
+      }
+  
 
-        let startDay = await userCheckCalendar[0].startTime
-        const finalDay = await userCheckCalendar[0].endTime
+      const userAccounts = await UserAccountModel.find({ userId });
+      if (!userAccounts.length) {
+        return { isAvailable: true, message: "User account not found." };
+      }
+  
+    //   const userEmailIds = userAccounts.map(({ _id }) => {
+    //     _id
+    //   });
+    //   console.log(userEmailIds)
+      const userCheckCalendar = await CalendarEventModel.find({
+        userId: userId,
+        startTime: { $gte: start },
+        endTime: { $lte: end },
+      });
+  
+
+      if (!userCheckCalendar  || userCheckCalendar.length === 0 ) {
+        console.log(userCheckCalendar)
         return {
-            isAvailable: false,
-            message: `User calendar isn't available on ${startDate} - ${endDate} for ${userCheckCalendar[0]?.title  || "the selected event"} from ${startDate.getMonth() + 1} ${startDay.getDate()} to ${finalDay.getMonth()}`
-          };
-          
+          isAvailable: true,
+          message: `User is available from ${start.toDateString()} to ${end.toDateString()}.`,
+        };
+      }
+
+      const firstEvent = userCheckCalendar[0];
+      const formattedStartDate = firstEvent?.startTime
+        ? firstEvent.startTime.toLocaleDateString()
+        : start.toLocaleDateString();
+      const formattedEndDate = firstEvent?.endTime
+        ? firstEvent.endTime.toLocaleDateString()
+        : end.toLocaleDateString();
+      const eventTitle = firstEvent?.title || "the selected event";
+  
+      return {
+        isAvailable: false,
+        message: `User is busy from ${formattedStartDate} to ${formattedEndDate} for ${eventTitle}.`,
+        calendar: userCheckCalendar,
+      };
     } catch (error) {
-        console.log(error)
-        return {isAvailable:true, message:`Error in checking calendar ${startDate} - ${endDate}` }
+      console.error(error);
+      return {
+        isAvailable: true,
+        message: `Error checking calendar between ${startDate} and ${endDate}.`,
+      };
     }
-}
+  };
+  
 
 export const checkScheduleAvailable = async (userId:string, startDate: Date, endDate:Date): Promise<{ isAvailable: boolean; message: string }  > => {
     try {
         console.log(startDate, endDate)
-        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const dayName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
       
         const userSchedule = await UserSettingModel.find({
             userId: userId
@@ -65,8 +101,8 @@ export const checkScheduleAvailable = async (userId:string, startDate: Date, end
         if (!userSchedule || userSchedule.length === 0) {
             const workDate = new Date(startDate)
             const finalDate = new Date(endDate);
-            return { isAvailable: false, message:`Not in preffered date ${ dayNames[workDate.getDate()] } at ${workDate.getHours()}: ${workDate.getMinutes()} -
-                 ${dayNames[finalDate.getDay()]} - ${finalDate.getHours()} - ${finalDate.getMinutes()} `}
+            return { isAvailable: false, message:`Not in preffered date on ${ dayName[workDate.getDay()] } at ${workDate.getHours()}: ${workDate.getMinutes()} -
+                 ${ dayName[workDate.getDay()]} - ${finalDate.getHours()}:${finalDate.getMinutes()} `}
           }
            
           
@@ -75,11 +111,11 @@ export const checkScheduleAvailable = async (userId:string, startDate: Date, end
         startDate = new Date(startDate);
         endDate = new Date(endDate);
 
-        const startDay = dayNames[startDate.getDay()];
-        const endDay = dayNames[endDate.getDay()];
+        const startDay = dayName[startDate.getDay()];
+        const endDay = dayName[endDate.getDay()];
 
         if (!userWorkingDays || !userWorkingDays.includes(startDay) || !userWorkingDays.includes(endDay) ){
-            return {isAvailable: false, message : `User preference is not on ${startDate}  - ${endDate}  ` }
+            return {isAvailable: false, message : `User preference is not on ${startDay}  - ${endDate}  ` }
         }
         return {isAvailable:true, message:`User preference is ${startDate} ${userWorkingDays.includes(startDay)} - ${endDate}  ${userWorkingDays.includes(endDay)}` }
     } catch (error) {

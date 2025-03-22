@@ -17,7 +17,7 @@ const UserAccountSchema = new Schema<IUserAccount>({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Reference to UserModel
     respondAllEmail: { type: Boolean, default: false },
     hostname: {type:String, required:true},
-    preferenceResponse:{type:String, required:true},
+    preferenceResponse:{type:String, default: null},
 },
 {toJSON: {
     transform: (_doc, ret) => {
