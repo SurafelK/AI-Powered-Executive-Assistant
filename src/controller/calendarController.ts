@@ -174,4 +174,23 @@ export const editCalendars = async (req:AuthRequest, res:Response) => {
         res.status(500).json({message: "Internal server error"})
         return
     }
+}
+
+export const deleteCalendars = async (req:AuthRequest, res:Response) => {
+try {
+    const calendarId = req.params.calendarId
+    if(!calendarId){
+        res.status(400).json({message: "Calendar ID is required"})
+        return
     }
+    const userId= req.user.id
+    const findCalendar = await CalendarEventModel.findOne({userId, _id: calendarId})
+    if(!findCalendar){
+        res.status(404).json({message: "Calendar not found"})
+        return
+    }
+} catch (error) {
+    res.status(500).json({message: "Internal server error"})
+    return
+}
+}
