@@ -37,9 +37,8 @@ export const createCalendar = async (req: AuthRequest, res: Response) => {
 
         const checkCalendar = await CheckUserCalendar(userId, startTime, endTime);
 
-        if (checkCalendar && !checkCalendar.isAvailable) {
-            res.status(400).json({ message: "Time slot is already booked" });
-            return
+        if (checkCalendar && checkCalendar.calendar && checkCalendar.calendar.length > 0) {
+           await DeleteCalendar(checkCalendar.calendar?.map(({ _id }) => _id));
         }
 
         const newCalendar = new CalendarEventModel({
