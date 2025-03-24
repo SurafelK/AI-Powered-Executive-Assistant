@@ -10,7 +10,7 @@ const authMiddleware_1 = require("../middlewares/authMiddleware");
 const router = express_1.default.Router();
 exports.UserAccountRouter = router;
 router.post('/add', authMiddleware_1.authMiddleware, userAccounts_1.createUserAccount);
-router.get('/acc-emails', authMiddleware_1.authMiddleware, userAccounts_1.getAccountEmails);
+router.get('/acc-emails/:email', authMiddleware_1.authMiddleware, userAccounts_1.getAccountEmails);
 router.post('/get-suggestion', authMiddleware_1.authMiddleware, userAccounts_1.getSuggestion);
 router.get('/all-accounts', authMiddleware_1.authMiddleware, userAccounts_1.getAllAccounts);
 router.post('/send', authMiddleware_1.authMiddleware, userAccounts_1.sendResponses);

@@ -76,22 +76,31 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         // Compare the entered password with the stored hashed password
         const compare = yield (0, auth_1.comparePass)(user.salt, password, user.password);
         if (!compare) {
-            res.status(400).json("System is busy please try again later");
+            res.status(401).json({ message: "Invalid credentials" });
             return;
         }
-        // Generate JWT Token (optional, for authentication)
+        // Ensure JWT_SECRET is set
         const JWT_SECRET = process.env.JWT_SECRET;
         if (!JWT_SECRET) {
-            res.status(400).json({ message: "Please provide JWT_SECRET" });
+            res.status(500).json({ message: "Server configuration error" });
             return;
         }
+        // Generate JWT Token
         const token = jsonwebtoken_1.default.sign({ id: user._id }, JWT_SECRET, { expiresIn: "1h" });
         res.cookie("token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             maxAge: 3600000, // 1 hour
         });
-        res.status(200).json({ message: "Login successful", user, token });
+        res.status(200).json({
+            message: "Login successful",
+            user: {
+                id: user._id,
+                email: user.email,
+                name: user.name,
+            },
+            token,
+        });
         return;
     }
     catch (error) {

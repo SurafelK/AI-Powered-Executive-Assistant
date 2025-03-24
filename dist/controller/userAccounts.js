@@ -83,7 +83,7 @@ exports.getAllAccounts = getAllAccounts;
 const getAccountEmails = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const id = req.user.id;
-        const { email } = req.body;
+        const { email } = req.params;
         const emailAccount = yield userAccounts_1.UserAccountModel.findOne({ email });
         console.log(emailAccount, id);
         if (!emailAccount || emailAccount.userId.toString() !== id) {

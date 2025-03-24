@@ -15,16 +15,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.dbConnect = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const dbConnect = () => __awaiter(void 0, void 0, void 0, function* () {
+    const mongoURI = process.env.MONGO_URI;
+    if (!mongoURI) {
+        console.error("MongoDB connection string (MONGO_URI) is not defined");
+        throw new Error("MongoDB connection string is missing");
+    }
     try {
-        if (!process.env.MONGO_URI) {
-            throw new Error("MongoDB connection string (MONGO_URI) is not defined");
-        }
-        yield mongoose_1.default.connect(process.env.MONGO_URI);
+        console.log("Connecting to MongoDB...");
+        yield mongoose_1.default.connect(mongoURI);
         console.log("MongoDB connected successfully");
     }
     catch (error) {
         console.error("MongoDB connection error:", error);
-        process.exit(1); // Exit process on failure
+        throw error; // Throw error instead of exiting the process
     }
 });
 exports.dbConnect = dbConnect;
