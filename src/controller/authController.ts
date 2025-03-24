@@ -110,22 +110,27 @@ export const getProfile = async (req:AuthRequest, res:Response) => {
     }
 }
 
-export const isLoggedIn = async (req:AuthRequest, res:Response) => {
+export const isLoggedIn = async (req: AuthRequest, res: Response) => {
     try {
-        const user = req.user
-
-        const userProfile = await UserModel.findById(user.id)
-        if(!userProfile){
-            res.status(400).json({isLoggedIn: false,message: "No user data available"})
+        if (!req.user) {
+            res.status(401).json({ isLoggedIn: false, message: "Unauthorized" });
             return
         }
-        res.status(200).json({isLoggedIn: true, userProfile})
+
+        const userProfile = await UserModel.findById(req.user.id);
+        if (!userProfile) {
+            res.status(400).json({ isLoggedIn: false, message: "No user data available" });
+            return
+        }
+
+        res.status(200).json({ isLoggedIn: true, userProfile });
         return
     } catch (error) {
-        res.status(500).json({message: "Internal server error"})
+        console.error("Error in isLoggedIn:", error);
+        res.status(500).json({ message: "Internal server error" });
         return
     }
-}
+};
 
 export const logout = (req: Request, res: Response) => {
     const token = req.header("Authorization")?.split(" ")[1];
