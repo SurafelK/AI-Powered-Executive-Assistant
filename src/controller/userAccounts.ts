@@ -52,27 +52,34 @@ export const createUserAccount = async (req:AuthRequest, res:Response) => {
         return
     }
 }  
-
 export const getAllAccounts = async (req: AuthRequest, res: Response) => {
     try {
         const id = req.user.id;
 
-        const emailAccounts = await UserAccountModel.find({userId:id});
+        const emailAccounts = await UserAccountModel.find({ userId: id });
 
-        if (!emailAccounts) {
+        if (emailAccounts.length === 0) {
             res.status(400).json({ message: "No email account found" });
-            return
+            return;
         }
 
-        res.status(200).json({ emailAccounts });
-        return
+        const allAccountsEmail = await Promise.all(
+            emailAccounts.map(async ({ email, password, hostname }) => {
+                const decPassword = await decrypt(password);
+                const allEmails = await getAllEmails(email, decPassword.decrypted.toString(), hostname);
+                return { [email]: allEmails }; // Use email as the key
+            })
+        );
 
+        res.status(200).json({ accounts: allAccountsEmail });
+        return;
     } catch (error) {
         console.error("Error fetching accounts:", error);
         res.status(500).json({ message: "Internal Server Error" });
-        return
+        return;
     }
 };
+
 
 export const getAccountEmails = async (req: AuthRequest, res: Response) => {
     try {
