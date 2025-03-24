@@ -112,6 +112,7 @@ export const getProfile = async (req:AuthRequest, res:Response) => {
 export const isLoggedIn = async (req:AuthRequest, res:Response) => {
     try {
         const user = req.user
+        
         const userProfile = await UserModel.findById(user.id)
         if(!userProfile){
             res.status(400).json({isLoggedIn: false,message: "No user data available"})
