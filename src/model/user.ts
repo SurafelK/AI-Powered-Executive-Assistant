@@ -10,7 +10,7 @@ interface IUser extends Document {
 const UserSchema = new Schema<IUser>(
     {
         name: { type: String, required: true, minlength: 3, maxlength: 20 },
-        password: { type: String, required: true, minlength: 3 },
+        password: { type: String, required: true, minlength: 6 },
         salt: { type: String, required: true, minlength: 3 },
         email: { type: String, required: true, minlength: 3, maxlength: 40, unique: true },
     },

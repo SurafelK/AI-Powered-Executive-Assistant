@@ -23,6 +23,16 @@ export const createUser = async (req:Request, res:Response) => {
             return
         }
 
+        if (password.length < 6) {
+            res.status(400).json({ message: "Password must be at least 6 characters" });
+            return
+        }
+
+        if(name.length < 3  || name.length > 20){
+            res.status(400).json({message: "Name must be between 3 and 20 characters"})
+            return
+        }
+
         const {saltPass, hashPass} = await saltHashPass(password)
 
         if(!saltPass || !hashPass){
