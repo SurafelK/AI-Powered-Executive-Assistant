@@ -5,7 +5,7 @@ import { authMiddleware } from '../middlewares/authMiddleware'
 const router = express.Router()
 
 router.post('/add',authMiddleware, createUserAccount )
-router.get('/acc-emails', authMiddleware, getAccountEmails)
+router.get('/acc-emails/:email', authMiddleware, getAccountEmails)
 router.post('/get-suggestion', authMiddleware,getSuggestion )
 router.get('/all-accounts', authMiddleware, getAllAccounts)
 router.post('/send', authMiddleware, sendResponses)
