@@ -84,7 +84,7 @@ export const getAllAccounts = async (req: AuthRequest, res: Response) => {
 export const getAccountEmails = async (req: AuthRequest, res: Response) => {
     try {
         const id = req.user.id;
-        const { email } = <IgetAccountEmails> req.params; 
+        const { email } = req.params; 
         
         const emailAccount = await UserAccountModel.findOne({ email });
         console.log(emailAccount, id)
