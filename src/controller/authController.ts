@@ -83,7 +83,12 @@ export const login = async (req: Request, res: Response) => {
         }
         const token = jwt.sign({ id: user._id },JWT_SECRET , { expiresIn: "1h" });
 
-        res.status(200).json({ message: "Login successful", user, token });
+        res.status(200).json({ message: "Login successful", user, token }).cookie("token", token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            maxAge: 3600000,
+        });
         return
     } catch (error) {
         console.error("Login error:", error);
@@ -104,3 +109,29 @@ export const getProfile = async (req:AuthRequest, res:Response) => {
         
     }
 }
+
+export const isLoggedIn = async (req:AuthRequest, res:Response) => {
+    try {
+        const user = req.user
+        const userProfile = await UserModel.findById(user.id)
+        if(!userProfile){
+            res.status(400).json({isLoggedIn: false,message: "No user data available"})
+            return
+        }
+        res.status(200).json({isLoggedIn: true, userProfile})
+        return
+    } catch (error) {
+        res.status(500).json({message: "Internal server error"})
+        return
+    }
+}
+
+export const logout = (req: Request, res: Response) => {
+    const token = req.header("Authorization")?.split(" ")[1];
+    if (!token) return res.status(400).json({ message: "No token provided" });
+
+    // Clear the cookie and expire it immediately
+    res.cookie("token", "", { expires: new Date(0), httpOnly: true, secure: true });
+
+    return res.json({ message: "Logged out successfully" });
+};
