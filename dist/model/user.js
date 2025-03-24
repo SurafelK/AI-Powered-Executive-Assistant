@@ -4,7 +4,7 @@ exports.UserModel = void 0;
 const mongoose_1 = require("mongoose");
 const UserSchema = new mongoose_1.Schema({
     name: { type: String, required: true, minlength: 3, maxlength: 20 },
-    password: { type: String, required: true, minlength: 3 },
+    password: { type: String, required: true, minlength: 6 },
     salt: { type: String, required: true, minlength: 3 },
     email: { type: String, required: true, minlength: 3, maxlength: 40, unique: true },
 }, {

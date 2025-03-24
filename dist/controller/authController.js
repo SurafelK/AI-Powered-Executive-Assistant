@@ -30,6 +30,14 @@ const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             res.status(400).json({ message: "You have account previously" });
             return;
         }
+        if (password.length < 6) {
+            res.status(400).json({ message: "Password must be at least 6 characters" });
+            return;
+        }
+        if (name.length < 3 || name.length > 20) {
+            res.status(400).json({ message: "Name must be between 3 and 20 characters" });
+            return;
+        }
         const { saltPass, hashPass } = yield (0, auth_1.saltHashPass)(password);
         if (!saltPass || !hashPass) {
             res.status(500).json({ message: "Internal server error" });
@@ -89,6 +97,7 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     catch (error) {
         console.error("Login error:", error);
         res.status(500).json({ message: "Internal Server Error" });
+        return;
     }
 });
 exports.login = login;
