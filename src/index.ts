@@ -8,6 +8,7 @@ import cron from "node-cron";
 import { respondAllEmail } from './Email/emailSupport';
 import { CalendarRouter } from './routers/CalendarRouter';
 import cookieParser from "cookie-parser";
+import { WorkingSettingRouter } from './routers/accountPreferenceRouter';
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ const PORT = 5000
 app.use('/api/auth', AuthRouter )
 app.use('/api/account', UserAccountRouter )
 app.use('/api/calendar', CalendarRouter )
+app.use('/api/working-hours', WorkingSettingRouter )
 app.use(cookieParser()); // Use cookie-parser middleware
 
 dbConnect()
