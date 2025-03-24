@@ -100,19 +100,20 @@ export const getProfile = async (req:AuthRequest, res:Response) => {
         const user = req.user
         const userProfile = await UserModel.findById(user.id)
         if(!userProfile){
-            res.status(400).json({message: "No user data available"})
+            res.status(400).json({isLoggedIn:false, message: "No user data available"})
             return
         }
-        res.status(200).json({userProfile})
+        res.status(200).json({isLoggedIn:true, userProfile})
     } catch (error) {
-        
+        res.status(500).json({message: "Internal server error"})
+        return
     }
 }
 
 export const isLoggedIn = async (req:AuthRequest, res:Response) => {
     try {
         const user = req.user
-        
+
         const userProfile = await UserModel.findById(user.id)
         if(!userProfile){
             res.status(400).json({isLoggedIn: false,message: "No user data available"})
