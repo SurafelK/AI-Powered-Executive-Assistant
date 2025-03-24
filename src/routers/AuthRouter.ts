@@ -7,6 +7,6 @@ const router = express.Router()
 router.post('/register', createUser )
 router.post('/login', login )
 router.get('/profile', authMiddleware,getProfile )
-router.get('/is-auth', authMiddleware, isLoggedIn)
+router.get('/isloggedin', authMiddleware, isLoggedIn)
 
 export {router as AuthRouter}
