@@ -61,11 +61,16 @@ const getAllAccounts = (req, res) => __awaiter(void 0, void 0, void 0, function*
     try {
         const id = req.user.id;
         const emailAccounts = yield userAccounts_1.UserAccountModel.find({ userId: id });
-        if (!emailAccounts) {
+        if (emailAccounts.length === 0) {
             res.status(400).json({ message: "No email account found" });
             return;
         }
-        res.status(200).json({ emailAccounts });
+        const allAccountsEmail = yield Promise.all(emailAccounts.map((_a) => __awaiter(void 0, [_a], void 0, function* ({ email, password, hostname }) {
+            const decPassword = yield (0, encryptDecrypt_1.decrypt)(password);
+            const allEmails = yield (0, emailSupport_1.getAllEmails)(email, decPassword.decrypted.toString(), hostname);
+            return { [email]: allEmails }; // Use email as the key
+        })));
+        res.status(200).json({ accounts: allAccountsEmail });
         return;
     }
     catch (error) {
