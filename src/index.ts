@@ -7,6 +7,8 @@ import { UserAccountRouter } from './routers/accountRouter';
 import cron from "node-cron";
 import { respondAllEmail } from './Email/emailSupport';
 import { CalendarRouter } from './routers/CalendarRouter';
+import cookieParser from "cookie-parser";
+
 dotenv.config();
 
 const app = express()
@@ -19,6 +21,8 @@ const PORT = 5000
 app.use('/api/auth', AuthRouter )
 app.use('/api/account', UserAccountRouter )
 app.use('/api/calendar', CalendarRouter )
+app.use(cookieParser()); // Use cookie-parser middleware
+
 dbConnect()
 
 // Schedule a job to run every 1 day
