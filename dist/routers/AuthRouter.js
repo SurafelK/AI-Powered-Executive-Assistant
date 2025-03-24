@@ -12,3 +12,4 @@ exports.AuthRouter = router;
 router.post('/register', authController_1.createUser);
 router.post('/login', authController_1.login);
 router.get('/profile', authMiddleware_1.authMiddleware, authController_1.getProfile);
+router.get('/isloggedin', authMiddleware_1.authMiddleware, authController_1.isLoggedIn);

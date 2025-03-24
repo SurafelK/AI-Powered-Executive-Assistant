@@ -33,27 +33,21 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserAccountModel = void 0;
+exports.UserSettingModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const UserAccountSchema = new mongoose_1.Schema({
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    provider: { type: String, required: true },
-    userId: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "User", required: true }, // Reference to UserModel
-    respondAllEmail: { type: Boolean, default: false },
-    hostname: { type: String, required: true },
-    preferenceResponse: { type: String, default: null },
-}, { toJSON: {
-        transform: (_doc, ret) => {
-            delete ret.password;
-            delete ret.provider;
-            delete ret._id;
-            delete ret.userId;
-            delete ret.__v;
-            return ret;
-        },
+// Define User Setting Schema
+const UserSettingSchema = new mongoose_1.Schema({
+    userId: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "User", required: true, unique: true },
+    workingDays: {
+        type: [String],
+        required: true,
+        enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     },
-    timestamps: true
+    workingHoursStart: { type: String, required: true },
+    workingHoursEnd: { type: String, required: true },
+    timeSlotDuration: { type: Number, required: true },
+    ethCalendar: { type: Boolean, default: false }
 });
-const UserAccountModel = (0, mongoose_1.model)("UserAccount", UserAccountSchema);
-exports.UserAccountModel = UserAccountModel;
+// Create and Export Model
+const UserSetting = (0, mongoose_1.model)("UserSetting", UserSettingSchema);
+exports.UserSettingModel = UserSetting;

@@ -12,14 +12,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getProfile = exports.login = exports.createUser = void 0;
+exports.logout = exports.isLoggedIn = exports.getProfile = exports.login = exports.createUser = void 0;
 const user_1 = require("../model/user");
 const auth_1 = require("../Config/auth");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken")); // If using JWT for authentication
 // Create Account
 const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { email, name, password } = req.body;
+        const { email, name, password, } = req.body;
         console.log(email, name, password);
         if (!email || !name || !password) {
             res.status(400).json({ message: "Please fill all required fields" });
@@ -78,6 +78,11 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             return;
         }
         const token = jsonwebtoken_1.default.sign({ id: user._id }, JWT_SECRET, { expiresIn: "1h" });
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 3600000, // 1 hour
+        });
         res.status(200).json({ message: "Login successful", user, token });
         return;
     }
@@ -92,12 +97,45 @@ const getProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         const user = req.user;
         const userProfile = yield user_1.UserModel.findById(user.id);
         if (!userProfile) {
-            res.status(400).json({ message: "No user data available" });
+            res.status(400).json({ isLoggedIn: false, message: "No user data available" });
             return;
         }
-        res.status(200).json({ userProfile });
+        res.status(200).json({ isLoggedIn: true, userProfile });
     }
     catch (error) {
+        res.status(500).json({ message: "Internal server error" });
+        return;
     }
 });
 exports.getProfile = getProfile;
+const isLoggedIn = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!req.user) {
+            res.status(401).json({ isLoggedIn: false, message: "Unauthorized" });
+            return;
+        }
+        const userProfile = yield user_1.UserModel.findById(req.user.id);
+        if (!userProfile) {
+            res.status(400).json({ isLoggedIn: false, message: "No user data available" });
+            return;
+        }
+        res.status(200).json({ isLoggedIn: true, userProfile });
+        return;
+    }
+    catch (error) {
+        console.error("Error in isLoggedIn:", error);
+        res.status(500).json({ message: "Internal server error" });
+        return;
+    }
+});
+exports.isLoggedIn = isLoggedIn;
+const logout = (req, res) => {
+    var _a;
+    const token = (_a = req.header("Authorization")) === null || _a === void 0 ? void 0 : _a.split(" ")[1];
+    if (!token)
+        return res.status(400).json({ message: "No token provided" });
+    // Clear the cookie and expire it immediately
+    res.cookie("token", "", { expires: new Date(0), httpOnly: true, secure: true });
+    return res.json({ message: "Logged out successfully" });
+};
+exports.logout = logout;
