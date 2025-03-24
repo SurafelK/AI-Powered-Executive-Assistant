@@ -142,3 +142,36 @@ export const getCalendars = async (req:AuthRequest, res:Response) => {
         return
     }
 }
+
+
+export const editCalendars = async (req:AuthRequest, res:Response) => {
+    try {
+        const {title, startTime, endTime, attendees, description, location, recurrence, reminders, status, timeZone, email} =  <ICreateCalendarEventInput> req.body 
+        const calendarId = req.params.id
+        if(!calendarId){
+            res.status(400).json({message: "Calendar ID is required"})
+            return
+        }
+
+        const findCalendar = await CalendarEventModel.findOne({userId: req.user.id, _id: calendarId})
+        if(!findCalendar){
+            res.status(404).json({message: "Calendar not found"})
+            return
+        }
+    
+        const updateCalendar = await CalendarEventModel.findOneAndUpdate(
+            {_id: calendarId},
+            {title, startTime, endTime, attendees, description, location, recurrence, reminders, status, timeZone, email},
+            {new: true})
+    
+        if(!updateCalendar){
+            res.status(404).json({message: "Calendar not found"})
+            return
+        }
+        res.status(200).json({message: "Calendar updated successfully", updateCalendar})
+        return
+    } catch (error) {
+        res.status(500).json({message: "Internal server error"})
+        return
+    }
+    }
