@@ -306,7 +306,7 @@ export const getAllEmails = async (email: string, password: string, host: string
         const messages = await connection.search(searchCriteria, fetchOptions);
 
         // ✅ Limit processing to a maximum of 20 emails (adjust based on your needs)
-        const selectedMessages = messages.slice(0, 20);
+        const selectedMessages = messages.slice(0, 100);
 
         // ✅ Fetch full email text only if necessary
         const emailDetails = await Promise.all(
