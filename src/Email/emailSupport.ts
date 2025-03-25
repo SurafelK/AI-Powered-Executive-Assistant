@@ -309,6 +309,7 @@ export const getAllEmails = async (
         };
 
         const messages = await connection.search(searchCriteria, fetchOptions);
+        console.log(messages)
 
         const allEmails = [];
         for (let i = 0; i < messages.length; i++) {
