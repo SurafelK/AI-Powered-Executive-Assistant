@@ -290,7 +290,7 @@ const getAllEmails = (email, password, host) => __awaiter(void 0, void 0, void 0
         const fetchOptions = { bodies: ["HEADER.FIELDS (FROM SUBJECT DATE)"], struct: true };
         const messages = yield connection.search(searchCriteria, fetchOptions);
         // ✅ Limit processing to a maximum of 20 emails (adjust based on your needs)
-        const selectedMessages = messages.slice(0, 20);
+        const selectedMessages = messages.slice(0, 100);
         // ✅ Fetch full email text only if necessary
         const emailDetails = yield Promise.all(selectedMessages.map((message) => __awaiter(void 0, void 0, void 0, function* () {
             var _a, _b, _c;
