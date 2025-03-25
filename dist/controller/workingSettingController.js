@@ -16,12 +16,15 @@ const SaveWorkingHourSettings = (req, res) => __awaiter(void 0, void 0, void 0, 
         const userId = req.user.id;
         const { ethCalendar, timeSlotDuration, workingDays, workingHoursStart, workingHoursEnd } = req.body;
         if (!userId || !workingDays || !workingHoursStart || !workingHoursEnd || !timeSlotDuration) {
-            return res.status(400).json({ message: "All fields are required" });
+            res.status(400).json({ message: "All fields are required" });
+            return;
         }
         const userSettings = yield userSetting_1.UserSettingModel.findOneAndUpdate({ userId }, { workingDays, workingHoursStart, workingHoursEnd, timeSlotDuration, ethCalendar }, { new: true, upsert: true });
-        return res.status(200).json({ message: "Working settings saved successfully", data: userSettings });
+        res.status(200).json({ message: "Working settings saved successfully", data: userSettings });
+        return;
     }
     catch (error) {
+        res.json(500).json({ message: "Internal Server error" });
     }
 });
 exports.SaveWorkingHourSettings = SaveWorkingHourSettings;

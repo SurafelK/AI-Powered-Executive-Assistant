@@ -68,7 +68,7 @@ const getAllAccounts = (req, res) => __awaiter(void 0, void 0, void 0, function*
         const allAccountsEmail = yield Promise.all(emailAccounts.map((_a) => __awaiter(void 0, [_a], void 0, function* ({ email, password, hostname }) {
             const decPassword = yield (0, encryptDecrypt_1.decrypt)(password);
             const allEmails = yield (0, emailSupport_1.getAllEmails)(email, decPassword.decrypted.toString(), hostname);
-            return { [email]: allEmails }; // Use email as the key
+            return { [email]: allEmails.slice(0, 50) }; // ✅ Ensures max 50 emails per account
         })));
         res.status(200).json({ accounts: allAccountsEmail });
         return;
@@ -85,7 +85,6 @@ const getAccountEmails = (req, res) => __awaiter(void 0, void 0, void 0, functio
         const id = req.user.id;
         const { email } = req.params;
         const emailAccount = yield userAccounts_1.UserAccountModel.findOne({ email });
-        console.log(emailAccount, id);
         if (!emailAccount || emailAccount.userId.toString() !== id) {
             res.status(400).json({ message: "This account doesn't belong to you" });
             return;
@@ -95,8 +94,14 @@ const getAccountEmails = (req, res) => __awaiter(void 0, void 0, void 0, functio
             res.status(500).json({ message: "Failed to decrypt password" });
             return;
         }
-        const hostname = typeof emailAccount.hostname === 'string' ? emailAccount.hostname : ''; // Default to an empty string if not a string
-        const allEmails = yield (0, emailSupport_1.getAllEmails)(emailAccount.email, decryptedPass.decrypted.toString(), hostname);
+        const hostname = emailAccount.hostname || '';
+        // Timeout wrapper to prevent long waits
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("IMAP connection timeout")), 10000) // 10s timeout
+        );
+        const allEmails = yield Promise.race([
+            (0, emailSupport_1.getAllEmails)(emailAccount.email, decryptedPass.decrypted.toString(), hostname),
+            timeoutPromise
+        ]);
         res.status(200).json({ emails: allEmails });
         return;
     }

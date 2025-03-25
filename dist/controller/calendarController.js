@@ -14,6 +14,7 @@ const userAccounts_1 = require("../model/userAccounts");
 const CalendarManagment_1 = require("../Config/CalendarManagment");
 const calendar_1 = require("../model/calendar");
 const createCalendar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const userId = req.user.id;
         if (!userId) {
@@ -36,9 +37,8 @@ const createCalendar = (req, res) => __awaiter(void 0, void 0, void 0, function*
             return;
         }
         const checkCalendar = yield (0, CalendarManagment_1.CheckUserCalendar)(userId, startTime, endTime);
-        if (checkCalendar && !checkCalendar.isAvailable) {
-            res.status(400).json({ message: "Time slot is already booked" });
-            return;
+        if (checkCalendar && checkCalendar.calendar && checkCalendar.calendar.length > 0) {
+            yield (0, exports.DeleteCalendar)((_a = checkCalendar.calendar) === null || _a === void 0 ? void 0 : _a.map(({ _id }) => _id));
         }
         const newCalendar = new calendar_1.CalendarEventModel({
             title,

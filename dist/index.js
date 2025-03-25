@@ -22,6 +22,7 @@ const node_cron_1 = __importDefault(require("node-cron"));
 const emailSupport_1 = require("./Email/emailSupport");
 const CalendarRouter_1 = require("./routers/CalendarRouter");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
+const accountPreferenceRouter_1 = require("./routers/accountPreferenceRouter");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
@@ -30,6 +31,7 @@ const PORT = 5000;
 app.use('/api/auth', AuthRouter_1.AuthRouter);
 app.use('/api/account', accountRouter_1.UserAccountRouter);
 app.use('/api/calendar', CalendarRouter_1.CalendarRouter);
+app.use('/api/working-hours', accountPreferenceRouter_1.WorkingSettingRouter);
 app.use((0, cookie_parser_1.default)()); // Use cookie-parser middleware
 (0, db_1.dbConnect)();
 // Schedule a job to run every 1 day
