@@ -83,15 +83,13 @@ export const getAllAccounts = async (req: AuthRequest, res: Response) => {
 };
 
 
-
 export const getAccountEmails = async (req: AuthRequest, res: Response) => {
     try {
         const id = req.user.id;
-        const { email } = req.params; 
-        
+        const { email } = req.params;
+
         const emailAccount = await UserAccountModel.findOne({ email });
-        console.log(emailAccount, id)
-  
+
         if (!emailAccount || emailAccount.userId.toString() !== id) {
             res.status(400).json({ message: "This account doesn't belong to you" });
             return
@@ -103,13 +101,17 @@ export const getAccountEmails = async (req: AuthRequest, res: Response) => {
             return
         }
 
+        const hostname = emailAccount.hostname || '';
         
-        const hostname = typeof emailAccount.hostname === 'string' ? emailAccount.hostname : ''; // Default to an empty string if not a string
-        const allEmails = await getAllEmails(
-            emailAccount.email,
-            decryptedPass.decrypted.toString(),
-            hostname 
+        // Timeout wrapper to prevent long waits
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("IMAP connection timeout")), 10000) // 10s timeout
         );
+
+        const allEmails = await Promise.race([
+            getAllEmails(emailAccount.email, decryptedPass.decrypted.toString(), hostname),
+            timeoutPromise
+        ]);
 
         res.status(200).json({ emails: allEmails });
         return
@@ -120,6 +122,7 @@ export const getAccountEmails = async (req: AuthRequest, res: Response) => {
         return
     }
 };
+
 
 export const getSuggestion = async (req: AuthRequest, res: Response) => {
     try {

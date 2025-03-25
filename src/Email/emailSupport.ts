@@ -279,85 +279,60 @@ const markEmailAsRead = async (email: string, password: string, host: string, em
     }
 };
 
-export const getAllEmails = async (
-    email: string,
-    password: string,
-    host: string
-) => {
+export const getAllEmails = async (email: string, password: string, host: string) => {
     try {
         const config = {
             imap: {
                 user: email,
                 password: password,
-                host: host,
+                host,
                 port: 993,
                 tls: true,
                 tlsOptions: { rejectUnauthorized: false },
-                authTimeout: 10000,
+                authTimeout: 5000, // Reduced timeout
             },
         };
 
         // Connect to IMAP server
         const connection = await imaps.connect(config);
-        await connection.openBox("INBOX");
+        
+        // Open the INBOX folder only
+        await connection.openBox("INBOX"); // `true` means read-only mode
 
-        // ✅ Fetch emails (both read & unread)
-        const searchCriteria = ["ALL"]; 
-        const fetchOptions = {
-            bodies: ["HEADER", "TEXT"],
-            struct: true,
-        };
+        // ✅ Fetch only the latest unread emails in INBOX
+        const searchCriteria = ["ALL"]; // Modify this to "ALL" to get all emails
+        const fetchOptions = { bodies: ["HEADER.FIELDS (FROM SUBJECT DATE)"], struct: true };
 
         const messages = await connection.search(searchCriteria, fetchOptions);
-        console.log(messages)
 
-        const allEmails = [];
-        for (let i = 0; i < messages.length; i++) {
-            if (allEmails.length >= 50) break; // Quit when we reach 50 emails
+        // ✅ Limit processing to a maximum of 20 emails (adjust based on your needs)
+        const selectedMessages = messages.slice(0, 20);
 
-            const message = messages[i];
-            if (!message.parts || !Array.isArray(message.parts)) {
-                console.error("Invalid message format:", message);
-                continue;
-            }
+        // ✅ Fetch full email text only if necessary
+        const emailDetails = await Promise.all(
+            selectedMessages.map(async (message) => {
+                try {
+                    const headerPart = message.parts.find(part => part.which === "HEADER.FIELDS (FROM SUBJECT DATE)");
+                    if (!headerPart) return null;
 
-            let headerPart = message.parts.find(part => part.which === "HEADER");
-            let textPart = message.parts.find(part => part.which === "TEXT");
+                    const header = headerPart.body || {};
 
-            if (!headerPart || !textPart) {
-                console.warn("Missing email parts:", message);
-                continue;
-            }
-
-            const header = headerPart.body || {};
-            const textBody = textPart.body || "No Content";
-
-            try {
-                // Parse the email
-                const parsedEmail = await simpleParser(textBody);
-
-                // Extract plain text body, falling back to cleaned HTML if necessary
-                let emailBody = parsedEmail.text?.trim() || "";
-                if (!emailBody && parsedEmail.html) {
-                    emailBody = parsedEmail.html.replace(/<\/?[^>]+(>|$)/g, ""); // Remove HTML tags
+                    return {
+                        from: header.from?.[0] || "Unknown",
+                        subject: header.subject?.[0] || "No Subject",
+                        date: header.date?.[0] || "Unknown",
+                    };
+                } catch (error) {
+                    console.error("Error parsing email:", error);
+                    return null;
                 }
-                const cleanBody = await extractPlainText(emailBody);
-
-                allEmails.push({
-                    from: header.from?.[0] || "Unknown",
-                    subject: header.subject?.[0] || "No Subject",
-                    date: header.date?.[0] || "Unknown",
-                    body: cleanBody || "No Content",
-                });
-            } catch (error) {
-                console.error("Error parsing email:", error);
-            }
-        }
+            })
+        );
 
         // Close the connection
         await connection.end();
 
-        return allEmails;
+        return emailDetails.filter(email => email !== null);
 
     } catch (error) {
         console.error("Error fetching emails:", error);
