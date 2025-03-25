@@ -278,7 +278,6 @@ const markEmailAsRead = async (email: string, password: string, host: string, em
         console.error("Error marking email as read:", error);
     }
 };
-
 export const getAllEmails = async (
     email: string,
     password: string,
@@ -302,14 +301,14 @@ export const getAllEmails = async (
         await connection.openBox("INBOX");
 
         // ✅ Fetch emails (both read & unread)
-        const searchCriteria = ["ALL"]; 
+        const searchCriteria = ["UNSEEN"];
         const fetchOptions = {
             bodies: ["HEADER", "TEXT"],
             struct: true,
         };
 
         const messages = await connection.search(searchCriteria, fetchOptions);
-        console.log(messages)
+        console.log(messages);
 
         const allEmails = [];
         for (let i = 0; i < messages.length; i++) {
@@ -317,15 +316,15 @@ export const getAllEmails = async (
 
             const message = messages[i];
             if (!message.parts || !Array.isArray(message.parts)) {
-                console.error("Invalid message format:", message);
+                console.error(`Invalid message format at index ${i}:`, message);
                 continue;
             }
 
-            let headerPart = message.parts.find(part => part.which === "HEADER");
-            let textPart = message.parts.find(part => part.which === "TEXT");
+            const headerPart = message.parts.find(part => part.which === "HEADER");
+            const textPart = message.parts.find(part => part.which === "TEXT");
 
             if (!headerPart || !textPart) {
-                console.warn("Missing email parts:", message);
+                console.warn(`Missing parts for message at index ${i}:`, message);
                 continue;
             }
 

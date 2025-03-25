@@ -82,7 +82,6 @@ export const getAllAccounts = async (req: AuthRequest, res: Response) => {
     }
 };
 
-
 export const getAccountEmails = async (req: AuthRequest, res: Response) => {
     try {
         const id = req.user.id;
@@ -92,34 +91,43 @@ export const getAccountEmails = async (req: AuthRequest, res: Response) => {
 
         if (!emailAccount || emailAccount.userId.toString() !== id) {
             res.status(400).json({ message: "This account doesn't belong to you" });
-            return
+            return;
         }
 
         const decryptedPass = await decrypt(emailAccount.password);
         if (!decryptedPass?.decrypted) {
             res.status(500).json({ message: "Failed to decrypt password" });
-            return
+            return;
         }
 
         const hostname = emailAccount.hostname || '';
-        
+
         // Timeout wrapper to prevent long waits
-        const timeoutPromise = new Promise((_, reject) => 
+        const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error("IMAP connection timeout")), 10000) // 10s timeout
         );
 
-        const allEmails = await Promise.race([
-            getAllEmails(emailAccount.email, decryptedPass.decrypted.toString(), hostname),
-            timeoutPromise
-        ]);
-
-        res.status(200).json({ emails: allEmails });
-        return
-
+        try {
+            const allEmails = await Promise.race([
+                getAllEmails(emailAccount.email, decryptedPass.decrypted.toString(), hostname),
+                timeoutPromise
+            ]);
+            
+            res.status(200).json({ emails: allEmails });
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                if (error.message === "IMAP connection timeout") {
+                    res.status(408).json({ message: "Request timed out" });
+                } else {
+                    res.status(500).json({ message: "Internal server error", error: error.message });
+                }
+            } else {
+                res.status(500).json({ message: "Internal server error", error: "An unknown error occurred." });
+            }
+        }
     } catch (error) {
         console.error("Error fetching account emails:", error);
         res.status(500).json({ message: "Internal server error" });
-        return
     }
 };
 
