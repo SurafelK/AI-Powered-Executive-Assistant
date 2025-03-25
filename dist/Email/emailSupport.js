@@ -269,50 +269,70 @@ const markEmailAsRead = (email, password, host, emailDate) => __awaiter(void 0, 
     }
 });
 const getAllEmails = (email, password, host) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
     try {
         const config = {
             imap: {
                 user: email,
                 password: password,
-                host,
+                host: host,
                 port: 993,
                 tls: true,
                 tlsOptions: { rejectUnauthorized: false },
-                authTimeout: 5000, // Reduced timeout
+                authTimeout: 10000,
             },
         };
         // Connect to IMAP server
         const connection = yield imap_simple_1.default.connect(config);
-        // Open the INBOX folder only
-        yield connection.openBox("INBOX"); // `true` means read-only mode
-        // ✅ Fetch only the latest unread emails in INBOX
-        const searchCriteria = ["ALL"]; // Modify this to "ALL" to get all emails
-        const fetchOptions = { bodies: ["HEADER.FIELDS (FROM SUBJECT DATE)"], struct: true };
+        yield connection.openBox("INBOX");
+        // ✅ Fetch emails (both read & unread)
+        const searchCriteria = ["UNSEEN"];
+        const fetchOptions = {
+            bodies: ["HEADER", "TEXT"],
+            struct: true,
+        };
         const messages = yield connection.search(searchCriteria, fetchOptions);
-        // ✅ Limit processing to a maximum of 20 emails (adjust based on your needs)
-        const selectedMessages = messages.slice(0, 100);
-        // ✅ Fetch full email text only if necessary
-        const emailDetails = yield Promise.all(selectedMessages.map((message) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a, _b, _c;
+        console.log(messages);
+        const allEmails = [];
+        for (let i = 0; i < messages.length; i++) {
+            if (allEmails.length >= 50)
+                break; // Quit when we reach 50 emails
+            const message = messages[i];
+            if (!message.parts || !Array.isArray(message.parts)) {
+                console.error(`Invalid message format at index ${i}:`, message);
+                continue;
+            }
+            const headerPart = message.parts.find(part => part.which === "HEADER");
+            const textPart = message.parts.find(part => part.which === "TEXT");
+            if (!headerPart || !textPart) {
+                console.warn(`Missing parts for message at index ${i}:`, message);
+                continue;
+            }
+            const header = headerPart.body || {};
+            const textBody = textPart.body || "No Content";
             try {
-                const headerPart = message.parts.find(part => part.which === "HEADER.FIELDS (FROM SUBJECT DATE)");
-                if (!headerPart)
-                    return null;
-                const header = headerPart.body || {};
-                return {
-                    from: ((_a = header.from) === null || _a === void 0 ? void 0 : _a[0]) || "Unknown",
-                    subject: ((_b = header.subject) === null || _b === void 0 ? void 0 : _b[0]) || "No Subject",
-                    date: ((_c = header.date) === null || _c === void 0 ? void 0 : _c[0]) || "Unknown",
-                };
+                // Parse the email
+                const parsedEmail = yield (0, mailparser_1.simpleParser)(textBody);
+                // Extract plain text body, falling back to cleaned HTML if necessary
+                let emailBody = ((_a = parsedEmail.text) === null || _a === void 0 ? void 0 : _a.trim()) || "";
+                if (!emailBody && parsedEmail.html) {
+                    emailBody = parsedEmail.html.replace(/<\/?[^>]+(>|$)/g, ""); // Remove HTML tags
+                }
+                const cleanBody = yield extractPlainText(emailBody);
+                allEmails.push({
+                    from: ((_b = header.from) === null || _b === void 0 ? void 0 : _b[0]) || "Unknown",
+                    subject: ((_c = header.subject) === null || _c === void 0 ? void 0 : _c[0]) || "No Subject",
+                    date: ((_d = header.date) === null || _d === void 0 ? void 0 : _d[0]) || "Unknown",
+                    body: cleanBody || "No Content",
+                });
             }
             catch (error) {
                 console.error("Error parsing email:", error);
-                return null;
             }
-        })));
+        }
         // Close the connection
         yield connection.end();
-        return emailDetails.filter(email => email !== null);
+        return allEmails;
     }
     catch (error) {
         console.error("Error fetching emails:", error);

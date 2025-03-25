@@ -98,17 +98,30 @@ const getAccountEmails = (req, res) => __awaiter(void 0, void 0, void 0, functio
         // Timeout wrapper to prevent long waits
         const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("IMAP connection timeout")), 10000) // 10s timeout
         );
-        const allEmails = yield Promise.race([
-            (0, emailSupport_1.getAllEmails)(emailAccount.email, decryptedPass.decrypted.toString(), hostname),
-            timeoutPromise
-        ]);
-        res.status(200).json({ emails: allEmails });
-        return;
+        try {
+            const allEmails = yield Promise.race([
+                (0, emailSupport_1.getAllEmails)(emailAccount.email, decryptedPass.decrypted.toString(), hostname),
+                timeoutPromise
+            ]);
+            res.status(200).json({ emails: allEmails });
+        }
+        catch (error) {
+            if (error instanceof Error) {
+                if (error.message === "IMAP connection timeout") {
+                    res.status(408).json({ message: "Request timed out" });
+                }
+                else {
+                    res.status(500).json({ message: "Internal server error", error: error.message });
+                }
+            }
+            else {
+                res.status(500).json({ message: "Internal server error", error: "An unknown error occurred." });
+            }
+        }
     }
     catch (error) {
         console.error("Error fetching account emails:", error);
         res.status(500).json({ message: "Internal server error" });
-        return;
     }
 });
 exports.getAccountEmails = getAccountEmails;
