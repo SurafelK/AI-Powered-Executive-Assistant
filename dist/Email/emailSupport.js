@@ -286,7 +286,7 @@ const getAllEmails = (email, password, host) => __awaiter(void 0, void 0, void 0
         const connection = yield imap_simple_1.default.connect(config);
         yield connection.openBox("INBOX");
         // ✅ Fetch emails (both read & unread)
-        const searchCriteria = ["UNSEEN"];
+        const searchCriteria = ["ALL"];
         const fetchOptions = {
             bodies: ["HEADER", "TEXT"],
             struct: true,
