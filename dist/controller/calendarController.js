@@ -170,6 +170,8 @@ const deleteCalendars = (req, res) => __awaiter(void 0, void 0, void 0, function
             res.status(404).json({ message: "Calendar not found" });
             return;
         }
+        yield calendar_1.CalendarEventModel.deleteOne({ _id: findCalendar._id });
+        res.status(200).json({ message: "Calendar deleted successfully" });
     }
     catch (error) {
         res.status(500).json({ message: "Internal server error" });
