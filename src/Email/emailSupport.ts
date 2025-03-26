@@ -301,7 +301,7 @@ export const getAllEmails = async (
         await connection.openBox("INBOX");
 
         // ✅ Fetch emails (both read & unread)
-        const searchCriteria = ["UNSEEN"];
+        const searchCriteria = ["ALL"];
         const fetchOptions = {
             bodies: ["HEADER", "TEXT"],
             struct: true,
