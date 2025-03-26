@@ -188,6 +188,8 @@ try {
         res.status(404).json({message: "Calendar not found"})
         return
     }
+    await CalendarEventModel.deleteOne({ _id: findCalendar._id });
+    res.status(200).json({message: "Calendar deleted successfully"})
 } catch (error) {
     res.status(500).json({message: "Internal server error"})
     return
